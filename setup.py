@@ -46,5 +46,11 @@ setup(
         'mock==1.0.1',
         'coverage==4.0.0'
     ],
-    cmdclass={'test': PyTest}
+    cmdclass={'test': PyTest},
+    classifiers=[
+        "Programming Language :: Python :: 2.6",
+        "Programming Language :: Python :: 2.7",
+        "Programming Language :: Python :: 3.3",
+        "Programming Language :: Python :: 3.4"
+    ]
 )
