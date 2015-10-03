@@ -120,6 +120,8 @@ class NamespacedContainer(SimpleContainer):
         self._sub_containers = {}
         self._name_resolver = name_resolver or NamespaceIdParser()
 
+        self._sub_containers[self.name] = self
+
     def add_sub_container(self, container):
         try:
             name = container.name
@@ -135,10 +137,15 @@ class NamespacedContainer(SimpleContainer):
         return self._sub_containers[name]
 
     def _resolve(self, id):
-        instance_id = self._name_resolver.parse(id)
-        if instance_id.namespace:
-            container = self._sub_containers[instance_id.namespace]
-            return container.get(instance_id.id)
+        if isinstance(id, str):
+            instance_id = self._name_resolver.parse(id)
+            if instance_id.namespace:
+                container = self._sub_containers[instance_id.namespace]
+                return container.get(instance_id.id)
+            else:
+                provider = self._locator.get(instance_id.id)
+                return provider.get()
         else:
-            provider = self._locator.get(instance_id.id)
+            provider = self._locator.get(id)
             return provider.get()
+

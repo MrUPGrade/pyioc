@@ -64,13 +64,24 @@ class Test_SimpleContainer(object):
 
         container.register_object('a', 'simple_string')
         container.register_callable('b', TestClass1)
-        container.register_callable_with_deps('ClassWithDeps', ClassWithDeps, lifetime=InstanceLifetime.NewInstancePerCall)
+        container.register_callable_with_deps('ClassWithDeps', ClassWithDeps,
+                                              lifetime=InstanceLifetime.NewInstancePerCall)
 
         class_with_deps = container.get('ClassWithDeps')
 
         assert isinstance(class_with_deps, ClassWithDeps)
         assert class_with_deps.a == 'simple_string'
         assert isinstance(class_with_deps.b, TestClass1)
+
+    def test_if_container_can_resolve_callables_by_type(self):
+        contaner_class = self.get_container()
+        container = contaner_class(name='name')
+
+        container.register_callable(TestClass1, TestClass2)
+
+        ret = container.get(TestClass1)
+
+        assert isinstance(ret, TestClass2)
 
 
 class Test_NamespaceContainer(Test_SimpleContainer):
@@ -106,7 +117,8 @@ class Test_NamespaceContainer(Test_SimpleContainer):
 
         sub_container.register_object('a', 'simple_string')
         container.register_callable('b', TestClass1)
-        container.register_callable_with_deps('ClassWithDeps', ClassWithDeps, lifetime=InstanceLifetime.NewInstancePerCall)
+        container.register_callable_with_deps('ClassWithDeps', ClassWithDeps,
+                                              lifetime=InstanceLifetime.NewInstancePerCall)
 
         container.add_sub_container(sub_container)
 
@@ -115,3 +127,14 @@ class Test_NamespaceContainer(Test_SimpleContainer):
         assert isinstance(class_with_deps, ClassWithDeps)
         assert class_with_deps.a == 'simple_string'
         assert isinstance(class_with_deps.b, TestClass1)
+
+
+    def test_if_container_recognize_his_own_namespace(self):
+        container_class = self.get_container()
+        container = container_class('repo')
+
+        container.register_callable('test1', TestClass1)
+
+        ret = container.get('repo__test1')
+
+        assert isinstance(ret, TestClass1)
