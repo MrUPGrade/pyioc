@@ -103,6 +103,10 @@ class SimpleContainer(object):
     def get(self, key):
         return self._resolve(key)
 
+    def build(self, cls):
+        provider = providers.NewInstancesWithDepsProvider(cls, self)
+        return provider.get()
+
     @property
     def name(self):
         return self._name

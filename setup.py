@@ -1,5 +1,4 @@
 # coding=utf-8
-
 import sys
 from setuptools import setup
 from setuptools.command.test import test as TestCommand
@@ -26,7 +25,7 @@ class PyTest(TestCommand):
 
 setup(
     name='pyioc',
-    version='0.1.1',
+    version='0.1.2',
     packages=['pyioc'],
     url='https://github.com/MrUPGrade/pyioc',
     license='MIT',

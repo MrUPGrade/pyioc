@@ -1,5 +1,3 @@
-# Created by .ignore support plugin (hsz.mobi)
-### Python template
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -12,6 +10,8 @@ env/
 *.egg-info/
 .installed.cfg
 *.egg
+dist/
+build/
 
 *.manifest
 *.spec
@@ -32,9 +32,6 @@ coverage.xml
 *.mo
 *.pot
 
-# Django stuff:
-*.log
-
 # Sphinx documentation
 docs/_build/
 docs/_templates
@@ -42,6 +39,6 @@ docs/_templates
 # PyBuilder
 target/
 
-
+# PyCharm
 .idea/
 
