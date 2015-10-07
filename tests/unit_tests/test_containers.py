@@ -5,7 +5,7 @@ from mock import Mock
 
 from pyioc.containers import *
 from pyioc.locators import ObjectLocator
-from tests.fakes import TestClass1
+from tests.fakes import TestClass1, TEST_CLASS_1_NAME
 
 
 class Test_SimpleIdParser(object):
@@ -148,6 +148,20 @@ class Test_SimpleContainer(object):
         container_class = self.container()
         localtor = container_class('my_name')
         assert localtor.name == 'my_name'
+
+    def test_if_container_build_class_with_registered_deps(self):
+        class ClassWithDeps(object):
+            def __init__(self, testclass1):
+                self.testclass1 = testclass1
+
+        container_class = self.container()
+        container = container_class()
+        container.register_callable(TEST_CLASS_1_NAME, TestClass1)
+
+        instance = container.build(ClassWithDeps)
+
+        assert isinstance(instance, ClassWithDeps)
+        assert isinstance(instance.testclass1, TestClass1)
 
 
 class Test_NamespaceContainer(Test_SimpleContainer):
