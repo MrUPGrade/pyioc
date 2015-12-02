@@ -33,11 +33,10 @@ setup(
     author_email='sirupgrade@gmail.com',
     description='Python IoC tools.',
     install_requires=[
-        'pytest==2.7.3',
-        'six==1.9.0',
-        'future==0.15.2',
-        'enum34==1.0.4',
-        'funcsigs==0.4'
+        'six>=1.9.0',
+        'future>=0.15.2',
+        'enum34>=1.1.1',
+        'funcsigs>=0.4'
     ],
     test_suite='tests',
     tests_require=[
