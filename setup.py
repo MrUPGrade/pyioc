@@ -41,7 +41,7 @@ setup(
     test_suite='tests',
     tests_require=[
         'pytest==2.7.3',
-        'mock==1.0.1',
+        'mock==1.3.0',
         'coverage==4.0.0'
     ],
     cmdclass={'test': PyTest},
