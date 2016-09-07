@@ -4,4 +4,3 @@
 
 PyIoC - Inversion of Control tools for python
 
-
