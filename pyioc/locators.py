@@ -99,6 +99,9 @@ class ObjectLocator(LocatorBase):
         """
         return key in self._objects
 
+    def get_keys(self):
+        return list(self._objects.keys())
+
     def _get_instance(self, key):
         return self._objects[key]
 

@@ -111,6 +111,9 @@ class SimpleContainer(object):
     def name(self):
         return self._name
 
+    def get_own_keys(self):
+        return self._locator.get_keys()
+
     def _resolve(self, key):
         return self._locator.get(key).get()
 
@@ -140,6 +143,15 @@ class NamespacedContainer(SimpleContainer):
     def get_sub_container(self, name):
         return self._sub_containers[name]
 
+    def get_all_keys(self):
+        result = {}
+        result[self.name] = self.get_own_keys()
+
+        for name, container in self._sub_containers.iteritems():
+            result[name] = container.get_own_keys()
+
+        return result
+
     def _resolve(self, id):
         if isinstance(id, str):
             instance_id = self._name_resolver.parse(id)
@@ -152,4 +164,3 @@ class NamespacedContainer(SimpleContainer):
         else:
             provider = self._locator.get(id)
             return provider.get()
-

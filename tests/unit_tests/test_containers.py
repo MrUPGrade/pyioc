@@ -5,7 +5,7 @@ from mock import Mock
 
 from pyioc.containers import *
 from pyioc.locators import ObjectLocator
-from tests.fakes import TestClass1, TEST_CLASS_1_NAME
+from tests.fakes import TestClass1, TEST_CLASS_1_NAME, TEST_CLASS_2_NAME, TestClass2
 
 
 class Test_SimpleIdParser(object):
@@ -163,6 +163,16 @@ class Test_SimpleContainer(object):
         assert isinstance(instance, ClassWithDeps)
         assert isinstance(instance.testclass1, TestClass1)
 
+    def test_if_container_returns_list_of_registered_objects(self):
+        container_class = self.container()
+        container = container_class()
+        container.register_callable(TEST_CLASS_1_NAME, TestClass1)
+
+        registered_keys = container.get_own_keys()
+
+        assert TEST_CLASS_1_NAME in registered_keys
+        assert len(registered_keys) == 1
+
 
 class Test_NamespaceContainer(Test_SimpleContainer):
     @classmethod
@@ -199,3 +209,19 @@ class Test_NamespaceContainer(Test_SimpleContainer):
 
         with pytest.raises(TypeError):
             container.add_sub_container({})
+
+    def test_if_container_returns_list_of_registered_objects_including_subcontainers(self):
+        container_class = self.container()
+        container = container_class('container')
+
+        sub_container = SimpleContainer(name='sub_container')
+        sub_container.register_callable(TEST_CLASS_2_NAME, TestClass2)
+
+        container.add_sub_container(sub_container)
+        container.register_callable(TEST_CLASS_1_NAME, TestClass1)
+
+        registered_keys = container.get_all_keys()
+
+        assert TEST_CLASS_1_NAME in registered_keys['container']
+        assert TEST_CLASS_2_NAME in registered_keys['sub_container']
+        assert len(registered_keys) == 2

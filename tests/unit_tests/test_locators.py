@@ -71,6 +71,15 @@ class Test_ObjectLocator(object):
         assert isinstance(ret1, str)
         assert ret1 == 'default'
 
+    def test_if_locator_returns_keys_for_registered_objects(self):
+        locator = ObjectLocator()
+        locator.register('key', 'value')
+
+        keys = locator.get_keys()
+
+        assert 'key' in keys
+        assert len(keys) == 1
+
 
 class Test_KeyToStringConverter(object):
     def test_func_name(self):
