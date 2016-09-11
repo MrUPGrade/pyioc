@@ -3,7 +3,9 @@ from __future__ import absolute_import
 
 import pytest
 
-from pyioc.providers import *
+from pyioc.providers import validate_if_callable_without_args, SignatureError, ObjectProvider, NewInstancesProvider, \
+    LazySingleInstanceProvider, LazySingleInstanceWithDepsProvider, NewInstancesWithDepsProvider, \
+    EagerSingleInstanceProvider, EagerSingleInstanceWithDepsProvider
 from tests.fakes import TestClass1, TEST_CLASS_1_INSTANCE
 
 
@@ -129,7 +131,7 @@ class Test_LazySingletonProvider(object):
             return a
 
         with pytest.raises(TypeError):
-            provider = LazySingleInstanceProvider(func1)
+            LazySingleInstanceProvider(func1)
 
     def test_if_provider_raise_error_when_initialized_with_not_callable(self):
         with pytest.raises(TypeError):

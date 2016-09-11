@@ -2,7 +2,7 @@
 
 from pyioc.locators import ObjectLocator
 from pyioc.containers import SimpleContainer, NamespacedContainer, InstanceLifetime
-from tests.fakes import *
+from tests.fakes import TEST_CLASS_1_NAME, TestClass1, TEST_FUNC_1_NAME, TestFunc1, TestClass2, TEST_CLASS_2_NAME
 
 
 class Test_SimpleContainer(object):
@@ -127,7 +127,6 @@ class Test_NamespaceContainer(Test_SimpleContainer):
         assert isinstance(class_with_deps, ClassWithDeps)
         assert class_with_deps.a == 'simple_string'
         assert isinstance(class_with_deps.b, TestClass1)
-
 
     def test_if_container_recognize_his_own_namespace(self):
         container_class = self.get_container()

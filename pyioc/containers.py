@@ -2,10 +2,10 @@
 from __future__ import absolute_import
 
 from future.standard_library import install_aliases
-from future.utils import iteritems
 
 install_aliases()
 
+from future.utils import iteritems
 from collections import namedtuple
 from enum import Enum
 import abc
