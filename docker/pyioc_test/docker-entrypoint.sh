@@ -9,6 +9,6 @@ fi
 find . -iname *.pyc -delete
 
 useradd -m -o -u $EXEC_USER_ID executor
-sudo -u  executor "$@"
+sudo -E -u  executor "$@"
 
 find . -iname *.pyc -delete

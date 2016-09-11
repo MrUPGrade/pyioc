@@ -2,6 +2,7 @@
 from __future__ import absolute_import
 
 from future.standard_library import install_aliases
+from future.utils import iteritems
 
 install_aliases()
 
@@ -147,7 +148,7 @@ class NamespacedContainer(SimpleContainer):
         result = {}
         result[self.name] = self.get_own_keys()
 
-        for name, container in self._sub_containers.iteritems():
+        for name, container in iteritems(self._sub_containers):
             result[name] = container.get_own_keys()
 
         return result
