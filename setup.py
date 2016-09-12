@@ -25,7 +25,7 @@ class PyTest(TestCommand):
 
 setup(
     name='pyioc',
-    version='0.2.0',
+    version='0.2.1',
     packages=['pyioc'],
     url='https://github.com/MrUPGrade/pyioc',
     license='MIT',
