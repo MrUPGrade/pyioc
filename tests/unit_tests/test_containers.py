@@ -170,7 +170,7 @@ class Test_SimpleContainer(object):
         container = container_class()
         container.register_callable(TEST_CLASS_1_NAME, TestClass1)
 
-        registered_keys = container.get_own_keys()
+        registered_keys = container.get_keys()
 
         assert TEST_CLASS_1_NAME in registered_keys
         assert len(registered_keys) == 1

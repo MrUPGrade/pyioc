@@ -5,11 +5,12 @@ from future.standard_library import install_aliases
 
 install_aliases()
 
+import abc
+import six
+
 from future.utils import iteritems
 from collections import namedtuple
 from enum import Enum
-import abc
-import six
 
 from pyioc.locators import ObjectLocator, LocatorBase
 
@@ -26,9 +27,9 @@ class InstanceLifetime(Enum):
     """
     Enum representing possible lifetimes of an object in the container.
     """
-    NewInstancePerCall = 1
-    SingletonEager = 2
-    SingletonLazy = 3
+    NewInstancePerCall = 0
+    SingletonEager = 1
+    SingletonLazy = 2
 
 
 @six.add_metaclass(abc.ABCMeta)
@@ -85,7 +86,7 @@ class SimpleContainer(object):
         elif lifetime == InstanceLifetime.SingletonLazy:
             provider = providers.LazySingleInstanceProvider(callable_object)
         else:
-            raise TypeError('Unsuported instance lifetime.')
+            raise TypeError('Unsupported instance lifetime.')
 
         self._register_provider_for_key(key, provider)
 
@@ -97,7 +98,7 @@ class SimpleContainer(object):
         elif lifetime == InstanceLifetime.SingletonLazy:
             provider = providers.LazySingleInstanceWithDepsProvider(callable_object, self)
         else:
-            raise TypeError('Unsuported instance lifetime.')
+            raise TypeError('Unsupported instance lifetime.')
 
         self._register_provider_for_key(key, provider)
 
@@ -112,7 +113,12 @@ class SimpleContainer(object):
     def name(self):
         return self._name
 
-    def get_own_keys(self):
+    def get_keys(self):
+        """
+        Get all keys registered in that container.
+
+        :return: List of all keys registered in that container.
+        """
         return self._locator.get_keys()
 
     def _resolve(self, key):
@@ -137,7 +143,7 @@ class NamespacedContainer(SimpleContainer):
             raise TypeError('Locator must be of type: "%s"  or its subclass' % SimpleContainer.__class__.__name__)
 
         if name in self._sub_containers.keys():
-            raise KeyError('Container with name: "%s" is already registerd' % name)
+            raise KeyError('Container with name: "%s" is already registered' % name)
 
         self._sub_containers[container.name] = container
 
@@ -145,11 +151,18 @@ class NamespacedContainer(SimpleContainer):
         return self._sub_containers[name]
 
     def get_all_keys(self):
+        """
+        Get all keys from container and all sub containers.
+        This container keys will be stored under '' key in dictionary.
+        All sub containers will be stored under container name.
+
+        :return: Dictionary of keys registered in container and all sub containers.
+        """
         result = {}
-        result[self.name] = self.get_own_keys()
+        result[self.name] = self.get_keys()
 
         for name, container in iteritems(self._sub_containers):
-            result[name] = container.get_own_keys()
+            result[name] = container.get_keys()
 
         return result
 
