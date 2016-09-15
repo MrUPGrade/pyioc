@@ -116,7 +116,7 @@ class NewInstancesWithDepsProvider(ProviderBase):
             if arg == 'self':
                 continue
 
-            new_args.append(self._container.get(arg))
+            new_args.append(self._container.resolve(arg))
 
         if new_args:
             return self._callable_object(*new_args)

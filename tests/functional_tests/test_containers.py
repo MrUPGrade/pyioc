@@ -20,8 +20,8 @@ class Test_SimpleContainer(object):
         ret1 = locator.is_key_registered(TEST_CLASS_1_NAME)
         assert ret1 is True
 
-        ret2 = container.get(TEST_CLASS_1_NAME)
-        ret3 = container.get(TEST_CLASS_1_NAME)
+        ret2 = container.resolve(TEST_CLASS_1_NAME)
+        ret3 = container.resolve(TEST_CLASS_1_NAME)
 
         assert isinstance(ret2, TestClass1)
         assert id(ret2) == id(ret3)
@@ -36,8 +36,8 @@ class Test_SimpleContainer(object):
         ret1 = locator.is_key_registered(TEST_CLASS_1_NAME)
         assert ret1 is True
 
-        ret2 = container.get(TEST_CLASS_1_NAME)
-        ret3 = container.get(TEST_CLASS_1_NAME)
+        ret2 = container.resolve(TEST_CLASS_1_NAME)
+        ret3 = container.resolve(TEST_CLASS_1_NAME)
 
         assert isinstance(ret2, TestClass1)
         assert id(ret2) != id(ret3)
@@ -49,7 +49,7 @@ class Test_SimpleContainer(object):
         container._locator = locator
         container.register_object(TEST_FUNC_1_NAME, TestFunc1)
 
-        ret1 = container.get(TEST_FUNC_1_NAME)
+        ret1 = container.resolve(TEST_FUNC_1_NAME)
         assert ret1 is not None
         assert isinstance(ret1, type(TestFunc1))
 
@@ -67,7 +67,7 @@ class Test_SimpleContainer(object):
         container.register_callable_with_deps('ClassWithDeps', ClassWithDeps,
                                               lifetime=InstanceLifetime.NewInstancePerCall)
 
-        class_with_deps = container.get('ClassWithDeps')
+        class_with_deps = container.resolve('ClassWithDeps')
 
         assert isinstance(class_with_deps, ClassWithDeps)
         assert class_with_deps.a == 'simple_string'
@@ -79,7 +79,7 @@ class Test_SimpleContainer(object):
 
         container.register_callable(TestClass1, TestClass2)
 
-        ret = container.get(TestClass1)
+        ret = container.resolve(TestClass1)
 
         assert isinstance(ret, TestClass2)
 
@@ -99,10 +99,10 @@ class Test_NamespaceContainer(Test_SimpleContainer):
 
         container.add_sub_container(sub_container)
 
-        ret1 = container.get(TEST_CLASS_2_NAME)
+        ret1 = container.resolve(TEST_CLASS_2_NAME)
         assert isinstance(ret1, TestClass2)
 
-        ret2 = container.get('%s__%s' % ('sub', TEST_CLASS_1_NAME))
+        ret2 = container.resolve('%s__%s' % ('sub', TEST_CLASS_1_NAME))
         assert isinstance(ret2, TestClass1)
 
     def test_if_container_retrieves_classes_with_dependencies_from_sub_containers(self):
@@ -122,7 +122,7 @@ class Test_NamespaceContainer(Test_SimpleContainer):
 
         container.add_sub_container(sub_container)
 
-        class_with_deps = container.get('ClassWithDeps')
+        class_with_deps = container.resolve('ClassWithDeps')
 
         assert isinstance(class_with_deps, ClassWithDeps)
         assert class_with_deps.a == 'simple_string'
@@ -134,6 +134,6 @@ class Test_NamespaceContainer(Test_SimpleContainer):
 
         container.register_callable('test1', TestClass1)
 
-        ret = container.get('repo__test1')
+        ret = container.resolve('repo__test1')
 
         assert isinstance(ret, TestClass1)

@@ -25,6 +25,10 @@ class KeyToStringConverter(object):
 
 @six.add_metaclass(abc.ABCMeta)
 class LocatorBase(object):
+    """
+    Abstract Class Base declaring locator interface.
+    """
+
     @abc.abstractmethod
     def register(self, key, obj):
         pass
@@ -43,7 +47,7 @@ class LocatorBase(object):
 
 class ObjectLocator(LocatorBase):
     """
-    Simple object locator class.
+    Simple object locator implementation.
     """
 
     def __init__(self):
@@ -77,10 +81,10 @@ class ObjectLocator(LocatorBase):
 
     def get_or_default(self, key, default):
         """
-        Gets the object for a given key. If the key is not present in the locator, returns default.
+        Gets the object for a given key. If the key is not present in the locator, returns value of *default* parameter.
 
         :param key: Key under which object was registered.
-        :param default: Default value.
+        :param default: Default value, if there is no object registered for a given key.
         :return: Object registered under the given key, or default.
         """
         try:
@@ -92,9 +96,9 @@ class ObjectLocator(LocatorBase):
 
     def is_key_registered(self, key):
         """
-        Checks if the key is registered in the locator.
+        Checks if there is object registered for a given key in the locator.
 
-        :param key" Key to look for.
+        :param key: Key to look for.
         :return: True if there is a key in the locator, otherwise False.
         """
         return key in self._objects

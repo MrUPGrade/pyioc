@@ -17,6 +17,9 @@ from pyioc.locators import ObjectLocator, LocatorBase
 import pyioc.providers as providers
 
 InstanceId = namedtuple('InstanceId', ('id', 'namespace'))
+"""
+Namedtuple defining ID of instance in namespace container.
+"""
 
 
 class FormatError(Exception):
@@ -28,8 +31,19 @@ class InstanceLifetime(Enum):
     Enum representing possible lifetimes of an object in the container.
     """
     NewInstancePerCall = 0
+    """
+    New instance will be created every time container will be ask for object on given key.
+    """
     SingletonEager = 1
+    """
+    New instance will be created on registering the callable object to container and the result will be
+    stored in the container.
+    """
     SingletonLazy = 2
+    """
+    New instance will be created the first time container will be asked for object under given key. Both the callable
+    and object will be stored in the container.
+    """
 
 
 @six.add_metaclass(abc.ABCMeta)
@@ -65,7 +79,17 @@ class NamespaceIdParser(IdParserBase):
 
 
 class SimpleContainer(object):
+    """
+    a
+    """
+
     def __init__(self, name='', locator=None):
+        """
+        Raises TypeError when locator object is not derived from LocatorBase class.
+
+        :param name: Name for a container.
+        :param locator: Locator instance that will be used for storing objects in the container.
+        """
         if locator is not None:
             if not isinstance(locator, LocatorBase):
                 raise TypeError('locator must be instance of class derived from %s' % LocatorBase.__class__.__name__)
@@ -75,10 +99,28 @@ class SimpleContainer(object):
         self._name = name
 
     def register_object(self, key, obj):
+        """
+        Registers object for a given key.
+
+        :param key: Key under which the object will be registered
+        :param obj: Object
+        """
         provider = providers.ObjectProvider(obj)
         self._register_provider_for_key(key, provider)
 
     def register_callable(self, key, callable_object, lifetime=InstanceLifetime.NewInstancePerCall):
+        """
+        Registers a callable object that will be used to create a new instance of an object that will be returned upon
+        calling the get() method.
+
+        Based on the lifetime parameter, either the callable will be stored, and called whenever object is needed, or
+        the callable will be called on registering, and the returned object will be stored.
+
+        :param key:
+        :param callable_object: Callable object that will be used to create new object.
+        :param lifetime: Specified lifetime of an object that is produced by callable.
+        :return:
+        """
         if lifetime == InstanceLifetime.NewInstancePerCall:
             provider = providers.NewInstancesProvider(callable_object)
         elif lifetime == InstanceLifetime.SingletonEager:
@@ -102,15 +144,32 @@ class SimpleContainer(object):
 
         self._register_provider_for_key(key, provider)
 
-    def get(self, key):
+    def resolve(self, key):
+        """
+        Return instance based on what was registered for a given key.
+
+        :param key: Key under which the object or callable was registered.
+        :return: Instance related to that key. 
+        """
         return self._resolve(key)
 
     def build(self, cls):
+        """
+        Build a new instance of class cls injecting dependencies of an object from objects registered in the container.
+
+        :param cls: Class of which object to build.
+        :return:
+        """
         provider = providers.NewInstancesWithDepsProvider(cls, self)
         return provider.get()
 
     @property
     def name(self):
+        """
+        The name of the container.
+
+        :return: str with the name of the container.
+        """
         return self._name
 
     def get_keys(self):
@@ -122,7 +181,8 @@ class SimpleContainer(object):
         return self._locator.get_keys()
 
     def _resolve(self, key):
-        return self._locator.get(key).get()
+        instance_provider = self._locator.get(key)
+        return instance_provider.get()
 
     def _register_provider_for_key(self, id, provider):
         self._locator.register(id, provider)
@@ -171,7 +231,7 @@ class NamespacedContainer(SimpleContainer):
             instance_id = self._name_resolver.parse(id)
             if instance_id.namespace:
                 container = self._sub_containers[instance_id.namespace]
-                return container.get(instance_id.id)
+                return container.resolve(instance_id.id)
             else:
                 provider = self._locator.get(instance_id.id)
                 return provider.get()
