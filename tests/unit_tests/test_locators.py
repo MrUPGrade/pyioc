@@ -12,17 +12,16 @@ class Test_ObjectLocator(object):
         test_object = TestClass1()
 
         localtor.register(TEST_CLASS_1_NAME, test_object)
-        instance = localtor.get(TEST_CLASS_1_NAME)
+        instance = localtor.locate(TEST_CLASS_1_NAME)
 
         assert instance is not None
-        assert isinstance(instance, type(test_object))
         assert test_object is instance
 
     def test_if_resolving_unregistered_object_raises_exception(self):
-        localtor = ObjectLocator()
+        locator = ObjectLocator()
 
         with pytest.raises(KeyError):
-            localtor.get(TEST_CLASS_1_NAME)
+            locator.locate(TEST_CLASS_1_NAME)
 
     def test_if_registering_duplicate_entry_raises_exception(self):
         locator = ObjectLocator()
@@ -38,7 +37,7 @@ class Test_ObjectLocator(object):
         test_object = TestClass1()
 
         locator.register(TestClass1, test_object)
-        instance = locator.get(TestClass1)
+        instance = locator.locate(TestClass1)
 
         assert instance is not None
         assert isinstance(instance, TestClass1)
@@ -70,6 +69,15 @@ class Test_ObjectLocator(object):
 
         assert isinstance(ret1, str)
         assert ret1 == 'default'
+
+    def test_if_locator_returns_keys_for_registered_objects(self):
+        locator = ObjectLocator()
+        locator.register('key', 'value')
+
+        keys = locator.get_keys()
+
+        assert 'key' in keys
+        assert len(keys) == 1
 
 
 class Test_KeyToStringConverter(object):

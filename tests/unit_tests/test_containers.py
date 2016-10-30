@@ -3,9 +3,11 @@
 import pytest
 from mock import Mock
 
-from pyioc.containers import *
+from pyioc.containers import SimpleContainer, NamespacedContainer, NamespaceIdParser, SimpleIdParser, FormatError, \
+    InstanceLifetime
 from pyioc.locators import ObjectLocator
-from tests.fakes import TestClass1, TEST_CLASS_1_NAME
+from tests.fakes import TestClass1, TEST_CLASS_1_NAME, TEST_CLASS_2_NAME, TestClass2
+import pyioc.providers as providers
 
 
 class Test_SimpleIdParser(object):
@@ -73,26 +75,14 @@ class Test_SimpleContainer(object):
         with pytest.raises(TypeError):
             container_class(locator={})
 
-    def test_register_singleton_lazy(self, mock_locator):
+    def test_register_singleton(self, mock_locator):
         container_class = self.container()
         container = container_class(name='name', locator=mock_locator)
-        container.register_callable('key', TestClass1, lifetime=InstanceLifetime.SingletonLazy)
+        container.register_callable('key', TestClass1, lifetime=InstanceLifetime.Singleton)
 
         args = mock_locator.register.call_args_list[0][0]
         assert args[0] == 'key'
         assert isinstance(args[1], providers.LazySingleInstanceProvider)
-
-    def test_register_singleton_eager(self, mock_locator):
-        class FakeClass(object):
-            pass
-
-        container_class = self.container()
-        container = container_class(locator=mock_locator)
-        container.register_callable('key', FakeClass, lifetime=InstanceLifetime.SingletonEager)
-
-        args = mock_locator.register.call_args_list[0][0]
-        assert args[0] == 'key'
-        assert isinstance(args[1], providers.EagerSingleInstanceProvider)
 
     def test_register_object(self, mock_locator):
         container_class = self.container()
@@ -103,7 +93,7 @@ class Test_SimpleContainer(object):
         assert args[0] == 'key'
         assert isinstance(args[1], providers.NewInstancesProvider)
 
-    def test_register_class_fatory(self, mock_locator):
+    def test_register_class_factory(self, mock_locator):
         container_class = self.container()
         container = container_class(locator=mock_locator)
         container.register_callable_with_deps('key', TestClass1)
@@ -112,19 +102,10 @@ class Test_SimpleContainer(object):
         assert args[0] == 'key'
         assert isinstance(args[1], providers.NewInstancesWithDepsProvider)
 
-    def test_register_class_fatory_singleton_eager(self, mock_locator):
+    def test_register_class_factory_singleton(self, mock_locator):
         container_class = self.container()
         container = container_class(locator=mock_locator)
-        container.register_callable_with_deps('key', TestClass1, lifetime=InstanceLifetime.SingletonEager)
-
-        args = mock_locator.register.call_args_list[0][0]
-        assert args[0] == 'key'
-        assert isinstance(args[1], providers.EagerSingleInstanceWithDepsProvider)
-
-    def test_register_class_fatory_singleton_lazy(self, mock_locator):
-        container_class = self.container()
-        container = container_class(locator=mock_locator)
-        container.register_callable_with_deps('key', TestClass1, lifetime=InstanceLifetime.SingletonLazy)
+        container.register_callable_with_deps('key', TestClass1, lifetime=InstanceLifetime.Singleton)
 
         args = mock_locator.register.call_args_list[0][0]
         assert args[0] == 'key'
@@ -163,6 +144,32 @@ class Test_SimpleContainer(object):
         assert isinstance(instance, ClassWithDeps)
         assert isinstance(instance.testclass1, TestClass1)
 
+    def test_if_container_build_class_when_context_is_passed(self):
+        class ClassWithDeps(object):
+            def __init__(self, testclass1):
+                self.testclass1 = testclass1
+
+        container_class = self.container()
+        container = container_class()
+
+        instance = container.build(ClassWithDeps,
+                                   context={
+                                       TEST_CLASS_1_NAME: TestClass1()
+                                   })
+
+        assert isinstance(instance, ClassWithDeps)
+        assert isinstance(instance.testclass1, TestClass1)
+
+    def test_if_container_returns_list_of_registered_objects(self):
+        container_class = self.container()
+        container = container_class()
+        container.register_callable(TEST_CLASS_1_NAME, TestClass1)
+
+        registered_keys = container.get_keys()
+
+        assert TEST_CLASS_1_NAME in registered_keys
+        assert len(registered_keys) == 1
+
 
 class Test_NamespaceContainer(Test_SimpleContainer):
     @classmethod
@@ -199,3 +206,19 @@ class Test_NamespaceContainer(Test_SimpleContainer):
 
         with pytest.raises(TypeError):
             container.add_sub_container({})
+
+    def test_if_container_returns_list_of_registered_objects_including_subcontainers(self):
+        container_class = self.container()
+        container = container_class('container')
+
+        sub_container = SimpleContainer(name='sub_container')
+        sub_container.register_callable(TEST_CLASS_2_NAME, TestClass2)
+
+        container.add_sub_container(sub_container)
+        container.register_callable(TEST_CLASS_1_NAME, TestClass1)
+
+        registered_keys = container.get_all_keys()
+
+        assert TEST_CLASS_1_NAME in registered_keys['container']
+        assert TEST_CLASS_2_NAME in registered_keys['sub_container']
+        assert len(registered_keys) == 2

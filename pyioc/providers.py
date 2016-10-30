@@ -49,7 +49,7 @@ def validate_if_callable_without_args(obj):
 @six.add_metaclass(abc.ABCMeta)
 class ProviderBase(object):
     @abc.abstractmethod
-    def get(self):
+    def get_instance(self, context=None):
         pass
 
 
@@ -57,7 +57,7 @@ class ObjectProvider(ProviderBase):
     def __init__(self, obj):
         self._obj = obj
 
-    def get(self):
+    def get_instance(self, context=None):
         return self._obj
 
 
@@ -66,7 +66,7 @@ class NewInstancesProvider(ProviderBase):
         validate_if_callable_without_args(callable_object)
         self._callable_object = callable_object
 
-    def get(self):
+    def get_instance(self, context=None):
         return self._callable_object()
 
 
@@ -76,7 +76,7 @@ class LazySingleInstanceProvider(ProviderBase):
         self._instance = None
         self._callable_object = callable_object
 
-    def get(self):
+    def get_instance(self, context=None):
         if not self._instance:
             self._instance = self._callable_object()
         return self._instance
@@ -87,7 +87,7 @@ class EagerSingleInstanceProvider(ProviderBase):
         validate_if_callable_without_args(callable_object)
         self._instance = callable_object()
 
-    def get(self):
+    def get_instance(self, context=None):
         return self._instance
 
 
@@ -99,10 +99,10 @@ class NewInstancesWithDepsProvider(ProviderBase):
         self._callable_object = callable_object
         self._container = container
 
-    def get(self):
-        return self._build_object()
+    def get_instance(self, context=None):
+        return self._build_object(context)
 
-    def _build_object(self):
+    def _build_object(self, context):
         if inspect.isclass(self._callable_object):
             if _check_if_init_implemented(self._callable_object):
                 args = inspect.getargspec(self._callable_object.__init__).args
@@ -116,7 +116,7 @@ class NewInstancesWithDepsProvider(ProviderBase):
             if arg == 'self':
                 continue
 
-            new_args.append(self._container.get(arg))
+            new_args.append(self._container.resolve(arg, context))
 
         if new_args:
             return self._callable_object(*new_args)
@@ -124,21 +124,12 @@ class NewInstancesWithDepsProvider(ProviderBase):
         return self._callable_object()
 
 
-class EagerSingleInstanceWithDepsProvider(NewInstancesWithDepsProvider):
-    def __init__(self, callable_object, container):
-        super(EagerSingleInstanceWithDepsProvider, self).__init__(callable_object, container)
-        self._instance = self._build_object()
-
-    def get(self):
-        return self._instance
-
-
 class LazySingleInstanceWithDepsProvider(NewInstancesWithDepsProvider):
     def __init__(self, callable_object, container):
         super(LazySingleInstanceWithDepsProvider, self).__init__(callable_object, container)
         self._instance = None
 
-    def get(self):
+    def get_instance(self, context=None):
         if not self._instance:
-            self._instance = self._build_object()
+            self._instance = self._build_object(context)
         return self._instance

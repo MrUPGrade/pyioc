@@ -3,7 +3,9 @@ from __future__ import absolute_import
 
 import pytest
 
-from pyioc.providers import *
+from pyioc.providers import validate_if_callable_without_args, SignatureError, ObjectProvider, NewInstancesProvider, \
+    LazySingleInstanceProvider, LazySingleInstanceWithDepsProvider, NewInstancesWithDepsProvider, \
+    EagerSingleInstanceProvider
 from tests.fakes import TestClass1, TEST_CLASS_1_INSTANCE
 
 
@@ -72,8 +74,8 @@ class Test_validate_if_callable_without_args(object):
 class Test_ObjectProvider(object):
     def test_if_single_instance_provider_returns_instance(self):
         provider = ObjectProvider(TEST_CLASS_1_INSTANCE)
-        ret1 = provider.get()
-        ret2 = provider.get()
+        ret1 = provider.get_instance()
+        ret2 = provider.get_instance()
 
         assert isinstance(ret1, TestClass1)
         assert isinstance(ret2, TestClass1)
@@ -83,14 +85,14 @@ class Test_ObjectProvider(object):
 class Test_NewInstancesProvider(object):
     def test_if_provider_returns_instance(self):
         provider = NewInstancesProvider(TestClass1)
-        ret1 = provider.get()
+        ret1 = provider.get_instance()
 
         assert isinstance(ret1, TestClass1)
 
     def test_if_provider_returns_new_instances_each_time(self):
         provider = NewInstancesProvider(TestClass1)
-        ret1 = provider.get()
-        ret2 = provider.get()
+        ret1 = provider.get_instance()
+        ret2 = provider.get_instance()
 
         assert isinstance(ret1, TestClass1)
         assert isinstance(ret2, TestClass1)
@@ -111,14 +113,14 @@ class Test_NewInstancesProvider(object):
 class Test_LazySingletonProvider(object):
     def test_if_object_provider_returns_instance(self):
         provider = LazySingleInstanceProvider(TestClass1)
-        ret1 = provider.get()
+        ret1 = provider.get_instance()
 
         assert isinstance(ret1, TestClass1)
 
     def test_if_object_provider_always_return_same_instance(self):
         provider = LazySingleInstanceProvider(TestClass1)
-        ret1 = provider.get()
-        ret2 = provider.get()
+        ret1 = provider.get_instance()
+        ret2 = provider.get_instance()
 
         assert isinstance(ret1, TestClass1)
         assert isinstance(ret2, TestClass1)
@@ -129,7 +131,7 @@ class Test_LazySingletonProvider(object):
             return a
 
         with pytest.raises(TypeError):
-            provider = LazySingleInstanceProvider(func1)
+            LazySingleInstanceProvider(func1)
 
     def test_if_provider_raise_error_when_initialized_with_not_callable(self):
         with pytest.raises(TypeError):
@@ -139,8 +141,8 @@ class Test_LazySingletonProvider(object):
 class Test_EagerSingleInstanceProvider(object):
     def test_if_single_instance_provider_returns_instance(self):
         provider = EagerSingleInstanceProvider(TestClass1)
-        ret1 = provider.get()
-        ret2 = provider.get()
+        ret1 = provider.get_instance()
+        ret2 = provider.get_instance()
 
         assert isinstance(ret1, TestClass1)
         assert isinstance(ret2, TestClass1)
@@ -159,48 +161,48 @@ class Test_EagerSingleInstanceProvider(object):
 
 
 class Test_NewInstancesWithDepsProvider(object):
-    def test_if_returns_new_instance_of_a_class(self, mock_locator):
-        provider = NewInstancesWithDepsProvider(TestClass1, mock_locator)
+    def test_if_returns_new_instance_of_a_class(self, mock_container):
+        provider = NewInstancesWithDepsProvider(TestClass1, mock_container)
 
-        ret1 = provider.get()
+        ret1 = provider.get_instance()
 
         assert isinstance(ret1, TestClass1)
 
-    def test_if_returns_different_instance_of_a_class(self, mock_locator):
-        provider = NewInstancesWithDepsProvider(TestClass1, mock_locator)
+    def test_if_returns_different_instance_of_a_class(self, mock_container):
+        provider = NewInstancesWithDepsProvider(TestClass1, mock_container)
 
-        ret1 = provider.get()
-        ret2 = provider.get()
+        ret1 = provider.get_instance()
+        ret2 = provider.get_instance()
 
         assert isinstance(ret1, TestClass1)
         assert isinstance(ret2, TestClass1)
         assert ret1 is not ret2
 
-    def test_if_provider_injects_registered_init_depts(self, mock_locator):
+    def test_if_provider_injects_registered_init_deps(self, mock_container):
         class ClassWIthDeps(object):
             def __init__(self, testclass1):
                 self.testclass1 = testclass1
 
-        provider = NewInstancesWithDepsProvider(ClassWIthDeps, mock_locator)
+        provider = NewInstancesWithDepsProvider(ClassWIthDeps, mock_container)
 
-        ret1 = provider.get()
+        ret1 = provider.get_instance()
 
         assert isinstance(ret1, ClassWIthDeps)
         assert isinstance(ret1.testclass1, TestClass1)
 
-    def test_if_provider_inject_registered_depts_to_function(self, mock_locator):
+    def test_if_provider_inject_registered_deps_to_function(self, mock_container):
         def func_with_deps(testclass1):
             return testclass1
 
-        provider = NewInstancesWithDepsProvider(func_with_deps, mock_locator)
+        provider = NewInstancesWithDepsProvider(func_with_deps, mock_container)
 
-        ret1 = provider.get()
+        ret1 = provider.get_instance()
 
         assert isinstance(ret1, TestClass1)
 
-    def test_if_provider_raise_error_when_initialized_with_not_callable(self, mock_locator):
+    def test_if_provider_raise_error_when_initialized_with_not_callable(self, mock_container):
         with pytest.raises(TypeError):
-            NewInstancesWithDepsProvider(1, mock_locator)
+            NewInstancesWithDepsProvider(1, mock_container)
 
 
 class Test_LazySingleInstanceWithDepsProvider(object):
@@ -208,70 +210,33 @@ class Test_LazySingleInstanceWithDepsProvider(object):
         def __init__(self, testclass1):
             self.testclass1 = testclass1
 
-    def test_if_returns_instance_of_a_class(self, mock_locator):
-        provider = LazySingleInstanceWithDepsProvider(TestClass1, mock_locator)
+    def test_if_returns_instance_of_a_class(self, mock_container):
+        provider = LazySingleInstanceWithDepsProvider(TestClass1, mock_container)
 
-        ret1 = provider.get()
-
-        assert isinstance(ret1, TestClass1)
-
-    def test_if_returns_different_instance_of_a_class(self, mock_locator):
-        provider = LazySingleInstanceWithDepsProvider(TestClass1, mock_locator)
-
-        ret1 = provider.get()
-        ret2 = provider.get()
-
-        assert isinstance(ret1, TestClass1)
-        assert isinstance(ret2, TestClass1)
-        assert ret1 is ret2
-
-    def test_if_provider_inject_registered_depts_to_function(self, mock_locator):
-        def func_with_deps(testclass1):
-            return testclass1
-
-        provider = LazySingleInstanceWithDepsProvider(func_with_deps, mock_locator)
-
-        ret1 = provider.get()
+        ret1 = provider.get_instance()
 
         assert isinstance(ret1, TestClass1)
 
-    def test_if_provider_raise_error_when_initialized_with_not_callable(self, mock_locator):
-        with pytest.raises(TypeError):
-            LazySingleInstanceWithDepsProvider(1, mock_locator)
+    def test_if_returns_different_instance_of_a_class(self, mock_container):
+        provider = LazySingleInstanceWithDepsProvider(TestClass1, mock_container)
 
-
-class Test_EagerSingleInstanceWithDepsProvider(object):
-    class ClassWIthDeps(object):
-        def __init__(self, testclass1):
-            self.testclass1 = testclass1
-
-    def test_if_returns_instance_of_a_class(self, mock_locator):
-        provider = EagerSingleInstanceWithDepsProvider(TestClass1, mock_locator)
-
-        ret1 = provider.get()
-
-        assert isinstance(ret1, TestClass1)
-
-    def test_if_returns_different_instance_of_a_class(self, mock_locator):
-        provider = EagerSingleInstanceWithDepsProvider(TestClass1, mock_locator)
-
-        ret1 = provider.get()
-        ret2 = provider.get()
+        ret1 = provider.get_instance()
+        ret2 = provider.get_instance()
 
         assert isinstance(ret1, TestClass1)
         assert isinstance(ret2, TestClass1)
         assert ret1 is ret2
 
-    def test_if_provider_inject_registered_depts_to_function(self, mock_locator):
+    def test_if_provider_inject_registered_deps_to_function(self, mock_container):
         def func_with_deps(testclass1):
             return testclass1
 
-        provider = EagerSingleInstanceWithDepsProvider(func_with_deps, mock_locator)
+        provider = LazySingleInstanceWithDepsProvider(func_with_deps, mock_container)
 
-        ret1 = provider.get()
+        ret1 = provider.get_instance()
 
         assert isinstance(ret1, TestClass1)
 
-    def test_if_provider_raise_error_when_initialized_with_not_callable(self, mock_locator):
+    def test_if_provider_raise_error_when_initialized_with_not_callable(self, mock_container):
         with pytest.raises(TypeError):
-            LazySingleInstanceWithDepsProvider(1, mock_locator)
+            LazySingleInstanceWithDepsProvider(1, mock_container)
