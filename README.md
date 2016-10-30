@@ -11,7 +11,7 @@ PyIoC - Inversion of Control tools for python
 To install dependencies run:
 
 ```bash
-pip install --upgrade -r requirements.txt
+pip install --upgrade -e .[dev,doc,test]
 ```
 
 ### Docker unit testing

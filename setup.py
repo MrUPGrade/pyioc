@@ -22,9 +22,10 @@ setup(
             'coverage>=4.0.0'
         ],
         'dev': [
-            'ipython'
+            'ipython',
+            'flake8'
         ],
-        'docs': [
+        'doc': [
             'sphinx'
         ]
     },
