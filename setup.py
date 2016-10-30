@@ -17,8 +17,8 @@ setup(
     ],
     extras_require={
         'test': [
-            'pytest>=2.7.3',
-            'mock>=1.0.1',
+            'pytest>=2.8.0',
+            'mock>=1.3.0',
             'coverage>=4.0.0'
         ],
         'dev': [
