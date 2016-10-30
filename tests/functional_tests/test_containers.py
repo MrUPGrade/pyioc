@@ -13,9 +13,8 @@ class Test_SimpleContainer(object):
     def test_registering_singleton(self):
         locator = ObjectLocator()
         container_class = self.get_container()
-        container = container_class()
-        container._locator = locator
-        container.register_callable(TEST_CLASS_1_NAME, TestClass1, lifetime=InstanceLifetime.SingletonLazy)
+        container = container_class(locator=locator)
+        container.register_callable(TEST_CLASS_1_NAME, TestClass1, lifetime=InstanceLifetime.Singleton)
 
         ret1 = locator.is_key_registered(TEST_CLASS_1_NAME)
         assert ret1 is True
@@ -24,13 +23,12 @@ class Test_SimpleContainer(object):
         ret3 = container.resolve(TEST_CLASS_1_NAME)
 
         assert isinstance(ret2, TestClass1)
-        assert id(ret2) == id(ret3)
+        assert ret2 is ret3
 
     def test_registering_class(self):
         locator = ObjectLocator()
         container_class = self.get_container()
-        container = container_class()
-        container._locator = locator
+        container = container_class(locator=locator)
         container.register_callable(TEST_CLASS_1_NAME, TestClass1)
 
         ret1 = locator.is_key_registered(TEST_CLASS_1_NAME)
@@ -40,13 +38,11 @@ class Test_SimpleContainer(object):
         ret3 = container.resolve(TEST_CLASS_1_NAME)
 
         assert isinstance(ret2, TestClass1)
-        assert id(ret2) != id(ret3)
+        assert ret2 is not ret3
 
     def test_registering_function_as_object(self):
-        locator = ObjectLocator()
         container_class = self.get_container()
         container = container_class()
-        container._locator = locator
         container.register_object(TEST_FUNC_1_NAME, TestFunc1)
 
         ret1 = container.resolve(TEST_FUNC_1_NAME)

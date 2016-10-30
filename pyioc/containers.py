@@ -34,12 +34,7 @@ class InstanceLifetime(Enum):
     """
     New instance will be created every time container will be ask for object on given key.
     """
-    SingletonEager = 1
-    """
-    New instance will be created on registering the callable object to container and the result will be
-    stored in the container.
-    """
-    SingletonLazy = 2
+    Singleton = 1
     """
     New instance will be created the first time container will be asked for object under given key. Both the callable
     and object will be stored in the container.
@@ -111,7 +106,7 @@ class SimpleContainer(object):
     def register_callable(self, key, callable_object, lifetime=InstanceLifetime.NewInstancePerCall):
         """
         Registers a callable object that will be used to create a new instance of an object that will be returned upon
-        calling the get() method.
+        calling the get_instance() method.
 
         Based on the lifetime parameter, either the callable will be stored, and called whenever object is needed, or
         the callable will be called on registering, and the returned object will be stored.
@@ -123,9 +118,7 @@ class SimpleContainer(object):
         """
         if lifetime == InstanceLifetime.NewInstancePerCall:
             provider = providers.NewInstancesProvider(callable_object)
-        elif lifetime == InstanceLifetime.SingletonEager:
-            provider = providers.EagerSingleInstanceProvider(callable_object)
-        elif lifetime == InstanceLifetime.SingletonLazy:
+        elif lifetime == InstanceLifetime.Singleton:
             provider = providers.LazySingleInstanceProvider(callable_object)
         else:
             raise TypeError('Unsupported instance lifetime.')
@@ -135,25 +128,23 @@ class SimpleContainer(object):
     def register_callable_with_deps(self, key, callable_object, lifetime=InstanceLifetime.NewInstancePerCall):
         if lifetime == InstanceLifetime.NewInstancePerCall:
             provider = providers.NewInstancesWithDepsProvider(callable_object, self)
-        elif lifetime == InstanceLifetime.SingletonEager:
-            provider = providers.EagerSingleInstanceWithDepsProvider(callable_object, self)
-        elif lifetime == InstanceLifetime.SingletonLazy:
+        elif lifetime == InstanceLifetime.Singleton:
             provider = providers.LazySingleInstanceWithDepsProvider(callable_object, self)
         else:
             raise TypeError('Unsupported instance lifetime.')
 
         self._register_provider_for_key(key, provider)
 
-    def resolve(self, key):
+    def resolve(self, key, context=None):
         """
         Return instance based on what was registered for a given key.
 
         :param key: Key under which the object or callable was registered.
-        :return: Instance related to that key. 
+        :return: Instance related to that key.
         """
-        return self._resolve(key)
+        return self._resolve(key, context)
 
-    def build(self, cls):
+    def build(self, cls, context=None):
         """
         Build a new instance of class cls injecting dependencies of an object from objects registered in the container.
 
@@ -161,7 +152,7 @@ class SimpleContainer(object):
         :return:
         """
         provider = providers.NewInstancesWithDepsProvider(cls, self)
-        return provider.get()
+        return provider.get_instance(context)
 
     @property
     def name(self):
@@ -180,9 +171,17 @@ class SimpleContainer(object):
         """
         return self._locator.get_keys()
 
-    def _resolve(self, key):
-        instance_provider = self._locator.get(key)
-        return instance_provider.get()
+    def _resolve(self, key, context=None):
+        if context:
+            try:
+                item = context[key]
+            except KeyError:
+                pass
+            else:
+                return item
+
+        instance_provider = self._locator.locate(key)
+        return instance_provider.get_instance(context)
 
     def _register_provider_for_key(self, id, provider):
         self._locator.register(id, provider)
@@ -226,15 +225,25 @@ class NamespacedContainer(SimpleContainer):
 
         return result
 
-    def _resolve(self, id):
+    def _resolve(self, id, context=None):
         if isinstance(id, str):
             instance_id = self._name_resolver.parse(id)
+
             if instance_id.namespace:
                 container = self._sub_containers[instance_id.namespace]
-                return container.resolve(instance_id.id)
+                return container.resolve(instance_id.id, context)
             else:
-                provider = self._locator.get(instance_id.id)
-                return provider.get()
+                if context:
+                    try:
+                        item = context[instance_id.id]
+                    except KeyError:
+                        pass
+                    else:
+                        return item
+
+                provider = self._locator.locate(instance_id.id)
+                return provider.get_instance(context)
+
         else:
-            provider = self._locator.get(id)
-            return provider.get()
+            provider = self._locator.locate(id)
+            return provider.get_instance(context)

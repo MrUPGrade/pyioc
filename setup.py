@@ -3,7 +3,7 @@ from setuptools import setup
 
 setup(
     name='pyioc',
-    version='0.2.1',
+    version='0.3.0',
     packages=['pyioc'],
     url='https://github.com/MrUPGrade/pyioc',
     license='MIT',

@@ -1,6 +1,6 @@
 # coding=utf-8
 """
-Module containing implementation of the service locator pattern.
+Module containing implementation of the service locator.
 """
 from __future__ import absolute_import
 
@@ -23,6 +23,28 @@ class KeyToStringConverter(object):
             return type(obj).__name__
 
 
+class UnregisteredKeyError(KeyError):
+    def __init__(self, key):
+        self._key = key
+
+    def __str__(self):
+        return 'There is no object registered for the given "%s" key' % self._key
+
+    def __unicode__(self):
+        return self.__str__()
+
+
+class KeyAlreadyRegisteredError(KeyError):
+    def __init__(self, key):
+        self._key = key
+
+    def __str__(self):
+        return 'There is already an object registered for the "%s" key' % self._key
+
+    def __unicode__(self):
+        return self.__str__()
+
+
 @six.add_metaclass(abc.ABCMeta)
 class LocatorBase(object):
     """
@@ -34,7 +56,7 @@ class LocatorBase(object):
         pass
 
     @abc.abstractmethod
-    def get(self, key):
+    def locate(self, key):
         pass
 
     @abc.abstractmethod
@@ -55,19 +77,19 @@ class ObjectLocator(LocatorBase):
 
     def register(self, key, obj):
         """
-         Register object in locator for a specified key.
+         Register object in locator under a specified key.
 
          :param key: Key under which object will be registered.
          :param obj: Object to register.
          """
         if key in self._objects:
-            raise KeyError('There is already an object registered for the "%s" key' % key)
+            raise KeyAlreadyRegisteredError(key)
 
         self._set_instance(key, obj)
 
-    def get(self, key):
+    def locate(self, key):
         """
-        Gets the object for a given key.
+        Returns the object registered for a given key.
 
         :param key: Key under which object was registered.
         :return: Object registered under the given key.
@@ -75,7 +97,7 @@ class ObjectLocator(LocatorBase):
         try:
             instance = self._get_instance(key)
         except KeyError:
-            raise KeyError('There is no object registered for the given"%s" key' % key)
+            raise UnregisteredKeyError(key)
 
         return instance
 
@@ -101,7 +123,11 @@ class ObjectLocator(LocatorBase):
         :param key: Key to look for.
         :return: True if there is a key in the locator, otherwise False.
         """
-        return key in self._objects
+        try:
+            self._objects[key]
+        except KeyError:
+            return False
+        return True
 
     def get_keys(self):
         return list(self._objects.keys())

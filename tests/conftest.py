@@ -36,7 +36,7 @@ def mock_container():
     :return: mocked locator with testclass1 and testclass2 registered
     """
 
-    def side_efect(name):
+    def side_efect(name, context=None):
         type_dict = {
             TEST_CLASS_1_NAME: TEST_CLASS_1_INSTANCE,
             TEST_CLASS_3_NAME: TEST_CLASS_3_INSTANCE

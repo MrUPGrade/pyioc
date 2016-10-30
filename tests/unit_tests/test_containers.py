@@ -75,26 +75,14 @@ class Test_SimpleContainer(object):
         with pytest.raises(TypeError):
             container_class(locator={})
 
-    def test_register_singleton_lazy(self, mock_locator):
+    def test_register_singleton(self, mock_locator):
         container_class = self.container()
         container = container_class(name='name', locator=mock_locator)
-        container.register_callable('key', TestClass1, lifetime=InstanceLifetime.SingletonLazy)
+        container.register_callable('key', TestClass1, lifetime=InstanceLifetime.Singleton)
 
         args = mock_locator.register.call_args_list[0][0]
         assert args[0] == 'key'
         assert isinstance(args[1], providers.LazySingleInstanceProvider)
-
-    def test_register_singleton_eager(self, mock_locator):
-        class FakeClass(object):
-            pass
-
-        container_class = self.container()
-        container = container_class(locator=mock_locator)
-        container.register_callable('key', FakeClass, lifetime=InstanceLifetime.SingletonEager)
-
-        args = mock_locator.register.call_args_list[0][0]
-        assert args[0] == 'key'
-        assert isinstance(args[1], providers.EagerSingleInstanceProvider)
 
     def test_register_object(self, mock_locator):
         container_class = self.container()
@@ -105,7 +93,7 @@ class Test_SimpleContainer(object):
         assert args[0] == 'key'
         assert isinstance(args[1], providers.NewInstancesProvider)
 
-    def test_register_class_fatory(self, mock_locator):
+    def test_register_class_factory(self, mock_locator):
         container_class = self.container()
         container = container_class(locator=mock_locator)
         container.register_callable_with_deps('key', TestClass1)
@@ -114,19 +102,10 @@ class Test_SimpleContainer(object):
         assert args[0] == 'key'
         assert isinstance(args[1], providers.NewInstancesWithDepsProvider)
 
-    def test_register_class_fatory_singleton_eager(self, mock_locator):
+    def test_register_class_factory_singleton(self, mock_locator):
         container_class = self.container()
         container = container_class(locator=mock_locator)
-        container.register_callable_with_deps('key', TestClass1, lifetime=InstanceLifetime.SingletonEager)
-
-        args = mock_locator.register.call_args_list[0][0]
-        assert args[0] == 'key'
-        assert isinstance(args[1], providers.EagerSingleInstanceWithDepsProvider)
-
-    def test_register_class_fatory_singleton_lazy(self, mock_locator):
-        container_class = self.container()
-        container = container_class(locator=mock_locator)
-        container.register_callable_with_deps('key', TestClass1, lifetime=InstanceLifetime.SingletonLazy)
+        container.register_callable_with_deps('key', TestClass1, lifetime=InstanceLifetime.Singleton)
 
         args = mock_locator.register.call_args_list[0][0]
         assert args[0] == 'key'
@@ -161,6 +140,22 @@ class Test_SimpleContainer(object):
         container.register_callable(TEST_CLASS_1_NAME, TestClass1)
 
         instance = container.build(ClassWithDeps)
+
+        assert isinstance(instance, ClassWithDeps)
+        assert isinstance(instance.testclass1, TestClass1)
+
+    def test_if_container_build_class_when_context_is_passed(self):
+        class ClassWithDeps(object):
+            def __init__(self, testclass1):
+                self.testclass1 = testclass1
+
+        container_class = self.container()
+        container = container_class()
+
+        instance = container.build(ClassWithDeps,
+                                   context={
+                                       TEST_CLASS_1_NAME: TestClass1()
+                                   })
 
         assert isinstance(instance, ClassWithDeps)
         assert isinstance(instance.testclass1, TestClass1)
