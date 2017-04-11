@@ -11,6 +11,7 @@ RUN cd /code && \
     pip3.3 install --upgrade -e .[test] && \
     pip3.4 install --upgrade -e .[test] && \
     pip3.5 install --upgrade -e .[test] && \
+    pip3.6 install --upgrade -e .[test] && \
     rm -Rf /code/
 
 
