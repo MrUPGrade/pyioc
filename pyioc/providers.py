@@ -36,7 +36,7 @@ def validate_if_callable_without_args(obj):
     else:
         obj_to_inspect = obj
 
-    spec = inspect.getargspec(obj_to_inspect)
+    spec = inspect.getfullargspec(obj_to_inspect)
     args = spec.args
     par_len = len(args)
     if par_len > 1:
@@ -105,11 +105,11 @@ class NewInstancesWithDepsProvider(ProviderBase):
     def _build_object(self, context):
         if inspect.isclass(self._callable_object):
             if _check_if_init_implemented(self._callable_object):
-                args = inspect.getargspec(self._callable_object.__init__).args
+                args = inspect.getfullargspec(self._callable_object.__init__).args
             else:
                 args = ()
         else:
-            args = inspect.getargspec(self._callable_object).args
+            args = inspect.getfullargspec(self._callable_object).args
 
         new_args = []
         for arg in args:
